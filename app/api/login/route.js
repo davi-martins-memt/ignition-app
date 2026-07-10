@@ -20,7 +20,7 @@ export async function POST(request){
         .select('email')
         .eq('username', username)
         .single()
-    console.log("ERRO BUSCA:", erroBusca)
+    
     // username não existe -> mesma mensagem genérica (não revela o que falhou)
     if (erroBusca || !usuario) {
         return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
@@ -31,9 +31,9 @@ export async function POST(request){
         email: usuario.email,
         password: senha
     })
-    console.log("ERRO AUTH:", erroAuth)
+    
     if (erroAuth || !authData.session) {
-        return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
+        return Response.json({ error: "Usuário ou senha inválidos." }, { status: 401 })
     }
 
     // 3. Sucesso -> devolve o token de acesso
