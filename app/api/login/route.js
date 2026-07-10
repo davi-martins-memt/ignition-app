@@ -31,6 +31,8 @@ export async function POST(request){
         email: usuario.email,
         password: senha
     })
+    console.log("EMAIL:", usuario.email)
+    console.log("ERRO AUTH:", erroAuth)
 
     if (erroAuth || !authData.session) {
         return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
