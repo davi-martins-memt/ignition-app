@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { validarToken } from "@/app/api/_lib/auth";
 
 // Cria cliente autorizado pra ler
 const supabase = createClient(
@@ -7,28 +8,32 @@ const supabase = createClient(
 )
 
 function validarData(inicio, fim) {
-        // Validar se fim eh maior doq momento atual
-        const agora = new Date()
-        const fimData = new Date(fim)
-        if (fimData > agora) {
-            return "A data final não pode ser no futuro"
-        }
+    // Validar se fim eh maior doq momento atual
+    const agora = new Date()
+    const fimData = new Date(fim)
+    if (fimData > agora) {
+        return "A data final não pode ser no futuro"
+    }
 
-        // Validar se a diferença é maior que 1h (minimo)
-        const inicioData = new Date(inicio)
-        if (fimData - inicioData < 1200000) {
-            return "O período mínimo selecionado deve ser de 20 minutos"
-        }
+    // Validar se a diferença é maior que 1h (minimo)
+    const inicioData = new Date(inicio)
+    if (fimData - inicioData < 1200000) {
+        return "O período mínimo selecionado deve ser de 20 minutos"
+    }
 
-        // Validar se a diferença é menor que 7D (máximo)
-        if (fimData - inicioData > 604800000) {
-            return "O período máximo selecionado deve ser de 7 dias"
-        }
+    // Validar se a diferença é menor que 7D (máximo)
+    if (fimData - inicioData > 604800000) {
+        return "O período máximo selecionado deve ser de 7 dias"
+    }
 
-        return ""
+    return ""
 }
 
 export async function GET(request, { params }) {
+    const user = await validarToken(request)
+    if (!user) {
+        return Response.json({ error: "Não autorizado" }, { status: 401 })
+    }
     const { id } = await params
     const { searchParams } = new URL(request.url)
     const startDate = searchParams.get('startDate')

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { validarToken } from "../../_lib/auth";
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -6,6 +7,11 @@ const supabase = createClient(
 )
 
 export async function GET(request, { params }) {
+    const user = await validarToken(request)
+    if (!user) {
+        return Response.json({ error: "Não autorizado" }, { status: 401 })
+    }
+    
     const { id } = await params
     const { data, error } = await supabase
         .from('devices')

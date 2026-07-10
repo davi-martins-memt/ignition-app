@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { validarToken } from "@/app/api/_lib/auth";
 
 // Cria cliente autorizado pra ler
 const supabase = createClient(
@@ -7,6 +8,11 @@ const supabase = createClient(
 )
 
 export async function GET(request, { params }) {
+    const user = await validarToken(request)
+    if (!user) {
+        return Response.json({ error: "Não autorizado" }, { status: 401 })
+    }
+    
     const { id } = await params
     const { data, error } = await supabase
         .from('realtime_readings')
