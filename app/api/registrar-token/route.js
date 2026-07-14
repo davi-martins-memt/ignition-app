@@ -6,6 +6,11 @@ const supabase = createClient(
     process.env.SUPABASE_KEY
 )
 
+const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
 export async function POST(request) {
     const user = await validarToken(request)
     if (!user) {
@@ -18,7 +23,7 @@ export async function POST(request) {
         return Response.json({ error: "Dados incompletos" }, { status: 400 })
     }
 
-    const { data: usuario } = await supabase
+    const { data: usuario } = await supabaseAdmin
         .from("usuarios")
         .select("id")
         .eq("username", username)
@@ -28,7 +33,7 @@ export async function POST(request) {
         return Response.json({ error: "Usuário não encontrado" }, { status: 404 })
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
         .from("usuario_fcm_token")
         .upsert(
             { usuario_id: usuario.id, token: fcm_token },
