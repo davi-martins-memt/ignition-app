@@ -13,11 +13,15 @@ const supabaseAdmin = createClient(
 export async function POST(request) {
     const { username, senha } = await request.json()
 
+    console.log("SERVICE KEY existe?", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
     const { data: usuario, error: erroBusca } = await supabaseAdmin
         .from("usuarios")
         .select("email")
         .eq("username", username)
         .single()
+
+    console.log("LOGIN admin: usuario =", JSON.stringify(usuario), "| erro =", JSON.stringify(erroBusca))
 
     if (!usuario) {
         return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
