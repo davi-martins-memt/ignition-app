@@ -5,21 +5,21 @@ const supabase = createClient(
     process.env.SUPABASE_KEY
 )
 
-export async function POST(request) {
-    console.log("LOGIN: URL =", process.env.SUPABASE_URL, "| KEY termina em =", process.env.SUPABASE_KEY?.slice(-6))
-    const { username, senha } = await request.json()
-    console.log("LOGIN: recebeu username =", username)
+const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
-    const { data: usuario, error: erroBusca } = await supabase
+export async function POST(request) {
+    const { username, senha } = await request.json()
+
+    const { data: usuario, error: erroBusca } = await supabaseAdmin
         .from("usuarios")
         .select("email")
         .eq("username", username)
         .single()
 
-    console.log("LOGIN: busca usuario =", usuario, "erro =", erroBusca)
-
     if (!usuario) {
-        console.log("LOGIN: nao achou email pelo username")
         return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
     }
 
@@ -27,8 +27,6 @@ export async function POST(request) {
         email: usuario.email,
         password: senha
     })
-
-    console.log("LOGIN: signIn erro =", erroAuth)
 
     if (erroAuth) {
         return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
