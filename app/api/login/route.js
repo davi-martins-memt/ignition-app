@@ -6,6 +6,7 @@ const supabase = createClient(
 )
 
 export async function POST(request) {
+    console.log("LOGIN: URL =", process.env.SUPABASE_URL, "| KEY termina em =", process.env.SUPABASE_KEY?.slice(-6))
     const { username, senha } = await request.json()
     console.log("LOGIN: recebeu username =", username)
 
