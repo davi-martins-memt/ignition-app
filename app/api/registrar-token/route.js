@@ -7,39 +7,32 @@ const supabase = createClient(
 )
 
 export async function POST(request) {
-    const user = await validarToken(request)
-    if (!user) {
-        return Response.json({ error: "Não autorizado" }, { status: 401 })
-    }
+    const { username, senha } = await request.json()
+    console.log("LOGIN: recebeu username =", username)
 
-    const { username, fcm_token } = await request.json()
-
-    if (!username || !fcm_token) {
-        return Response.json({ error: "Dados incompletos" }, { status: 400 })
-    }
-
-    // acha o usuario_id pelo username
-    const { data: usuario } = await supabase
+    const { data: usuario, error: erroBusca } = await supabase
         .from("usuarios")
-        .select("id")
+        .select("email")
         .eq("username", username)
         .single()
 
+    console.log("LOGIN: busca usuario =", usuario, "erro =", erroBusca)
+
     if (!usuario) {
-        return Response.json({ error: "Usuário não encontrado" }, { status: 404 })
+        console.log("LOGIN: nao achou email pelo username")
+        return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
     }
 
-    // grava o token (upsert pra não duplicar)
-    const { error } = await supabase
-        .from("usuario_fcm_token")
-        .upsert(
-            { usuario_id: usuario.id, token: fcm_token },
-            { onConflict: "usuario_id,token" }
-        )
+    const { data: authData, error: erroAuth } = await supabase.auth.signInWithPassword({
+        email: usuario.email,
+        password: senha
+    })
 
-    if (error) {
-        return Response.json({ error: "Erro ao registrar token" }, { status: 500 })
+    console.log("LOGIN: signIn erro =", erroAuth)
+
+    if (erroAuth) {
+        return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
     }
 
-    return Response.json({ sucesso: true })
+    return Response.json({ token: authData.session.access_token })
 }
