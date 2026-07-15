@@ -1,11 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { validarToken } from "../_lib/auth";
 
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
-)
-
 const supabaseAdmin = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -17,16 +12,17 @@ export async function POST(request) {
         return Response.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { username, fcm_token } = await request.json()
+    const { fcm_token } = await request.json()
 
-    if (!username || !fcm_token) {
+    if (!fcm_token) {
         return Response.json({ error: "Dados incompletos" }, { status: 400 })
     }
 
+    // usa o email do token (não confia em username do body)
     const { data: usuario } = await supabaseAdmin
         .from("usuarios")
         .select("id")
-        .eq("username", username)
+        .eq("email", user.email)
         .single()
 
     if (!usuario) {
