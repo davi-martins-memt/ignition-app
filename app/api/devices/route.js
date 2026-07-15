@@ -3,9 +3,8 @@ import { validarToken } from "../_lib/auth";
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY
 )
-
 
 export async function GET(request) {
     const user = await validarToken(request)
@@ -13,9 +12,34 @@ export async function GET(request) {
         return Response.json({ error: "Não autorizado" }, { status: 401 })
     }
 
+    // email -> usuario_id
+    const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+
+    if (!usuario) {
+        return Response.json({ error: "Usuário não encontrado" }, { status: 404 })
+    }
+
+    // device_ids que o usuário monitora
+    const { data: relacoes } = await supabase
+        .from('usuario_devices')
+        .select('device_id')
+        .eq('usuario_id', usuario.id)
+
+    const deviceIds = relacoes.map(r => r.device_id)
+
+    if (deviceIds.length === 0) {
+        return Response.json([])
+    }
+
+    // só os devices do usuário
     const { data, error } = await supabase
         .from('devices')
         .select('*')
+        .in('id', deviceIds)
 
     if (error) {
         return Response.json({ error: error.message }, { status: 500 })
@@ -38,10 +62,7 @@ export async function GET(request) {
                 online = diferencaSegundos < 60
             }
 
-            return {
-                ...device,
-                online: online
-            }
+            return { ...device, online }
         })
     )
 
