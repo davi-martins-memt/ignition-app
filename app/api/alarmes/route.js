@@ -12,14 +12,30 @@ export async function GET(request) {
         return Response.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const devicesParam = searchParams.get('devices')   // "1,2,3"
-    const deviceIds = devicesParam ? devicesParam.split(',').map(Number) : []   // [1,2,3]
+    // email -> usuario_id
+    const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+
+    if (!usuario) {
+        return Response.json({ error: "Usuário não encontrado" }, { status: 404 })
+    }
+
+    // device_ids que o usuário monitora
+    const { data: relacoes } = await supabase
+        .from('usuario_devices')
+        .select('device_id')
+        .eq('usuario_id', usuario.id)
+
+    const deviceIds = relacoes.map(r => r.device_id)
 
     if (deviceIds.length === 0) {
         return Response.json([])
     }
 
+    // alarmes desses devices
     const { data, error } = await supabase
         .from('alarmes')
         .select('id, grandeza, priority, timestamp, devices(nome)')
