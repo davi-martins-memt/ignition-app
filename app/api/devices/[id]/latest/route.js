@@ -1,10 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { validarToken } from "@/app/api/_lib/auth";
 
-// Cria cliente autorizado pra ler
 const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 export async function GET(request, { params }) {
@@ -12,8 +11,33 @@ export async function GET(request, { params }) {
     if (!user) {
         return Response.json({ error: "Não autorizado" }, { status: 401 })
     }
-    
+
     const { id } = await params
+
+    // email -> usuario_id
+    const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+
+    if (!usuario) {
+        return Response.json({ error: "Usuário não encontrado" }, { status: 404 })
+    }
+
+    // confere se ESSE device pertence ao usuário
+    const { data: relacao } = await supabase
+        .from('usuario_devices')
+        .select('device_id')
+        .eq('usuario_id', usuario.id)
+        .eq('device_id', id)
+        .single()
+
+    if (!relacao) {
+        return Response.json({ error: "Acesso negado a este device" }, { status: 403 })
+    }
+
+    // autorizado — retorna as leituras
     const { data, error } = await supabase
         .from('realtime_readings')
         .select('*')
