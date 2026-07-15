@@ -32,5 +32,5 @@ export async function POST(request) {
         return Response.json({ error: "Usuário ou senha inválidos" }, { status: 401 })
     }
 
-    return Response.json({ token: authData.session.access_token })
+    return Response.json({ token: authData.session.access_token, refreshToken: authData.session.refresh_token })
 }
